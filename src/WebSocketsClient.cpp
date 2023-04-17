@@ -849,8 +849,10 @@ void WebSocketsClient::connectedCb() {
         client->status = WSC_NOT_CONNECTED;
         client->tcp    = NULL;
 
-        // reconnect
-        c->asyncConnect();
+        if (c->_reconnectInterval > 0) {
+            // reconnect
+            c->asyncConnect();
+        }
 
         return true;
     },
@@ -924,11 +926,11 @@ void WebSocketsClient::asyncConnect() {
 
     tcpclient->onError(std::bind([](WebSocketsClient * ws, AsyncClient * tcp) {
         ws->connectFailedCb();
-
-        // reconnect
-        ws->asyncConnect();
-    },
-        this, std::placeholders::_2));
+        if(ws->_reconnectInterval > 0) {
+            // reconnect
+            ws->asyncConnect();
+        }
+    }, this, std::placeholders::_2));
 
     if(!tcpclient->connect(_host.c_str(), _port)) {
         connectFailedCb();
